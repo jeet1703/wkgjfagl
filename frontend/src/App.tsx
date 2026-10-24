@@ -1,0 +1,132 @@
+import { useState } from 'react'
+
+import { api, type Basis } from './api'
+import { AccuracyView } from './components/AccuracyView'
+import { DayAheadView } from './components/DayAheadView'
+import { ErrorBox, Loading } from './components/Stat'
+import { addDays, fmtDay } from './format'
+import { useAsync } from './hooks'
+
+type Tab = 'day' | 'accuracy'
+
+const CUTOFF_PRESETS = [
+  { value: '06:00', label: '06:00 · early desk' },
+  { value: '09:00', label: '09:00 · before auctions' },
+  { value: '11:00', label: '11:00 · last call' },
+  { value: '15:00', label: '15:00 · afternoon' },
+]
+
+const BASES: { value: Basis; label: string; title: string }[] = [
+  { value: 'metered', label: 'Wind delivered', title: 'Metered output – what you actually receive.' },
+  { value: 'available', label: 'Wind available', title: 'Delivered + wind the grid paid to switch off – fair test of forecast skill.' },
+]
+
+export default function App() {
+  const meta = useAsync(() => api.meta(), [])
+  const [tab, setTab] = useState<Tab>('day')
+  const [date, setDate] = useState('2026-01-15')
+  const [cutoff, setCutoff] = useState('09:00')
+  const [basis, setBasis] = useState<Basis>('metered')
+  const accuracy = useAsync(() => api.accuracy(cutoff, basis), [cutoff, basis])
+
+  if (meta.error) return <div className="app"><ErrorBox message={meta.error} /></div>
+  if (!meta.data) return <div className="app"><Loading /></div>
+  const [first, last] = meta.data.delivery_window
+  const clamp = (d: string) => (d < first ? first : d > last ? last : d)
+
+  return (
+    <div className="app">
+      <header className="top">
+        <div className="brand">
+          <img src="/favicon.svg" alt="" width={30} height={30} />
+          <div>
+            <h1>Windcast Desk</h1>
+            <p>GB national wind · day-ahead purchasing pilot · decisions in January 2026</p>
+          </div>
+        </div>
+        <nav className="tabs" aria-label="Views">
+          <button className={tab === 'day' ? 'on' : ''} onClick={() => setTab('day')}>
+            Day-ahead view
+          </button>
+          <button className={tab === 'accuracy' ? 'on' : ''} onClick={() => setTab('accuracy')}>
+            Forecast accuracy
+          </button>
+        </nav>
+      </header>
+
+      <div className="controls">
+        {tab === 'day' && (
+          <label className="field">
+            <span>Delivery day</span>
+            <div className="daypick">
+              <button aria-label="Previous day" disabled={date <= first} onClick={() => setDate(clamp(addDays(date, -1)))}>
+                ‹
+              </button>
+              <input type="date" min={first} max={last} value={date} onChange={(e) => e.target.value && setDate(clamp(e.target.value))} />
+              <button aria-label="Next day" disabled={date >= last} onClick={() => setDate(clamp(addDays(date, 1)))}>
+                ›
+              </button>
+            </div>
+            <small>{fmtDay(date)} · decided {fmtDay(addDays(date, -1))}</small>
+          </label>
+        )}
+        <label className="field">
+          <span>Decision cutoff (D-1, UK time)</span>
+          <div className="seg">
+            {CUTOFF_PRESETS.map((p) => (
+              <button key={p.value} className={cutoff === p.value ? 'on' : ''} onClick={() => setCutoff(p.value)} title={p.label}>
+                {p.value}
+              </button>
+            ))}
+            <input
+              type="time"
+              step={1800}
+              value={cutoff}
+              onChange={(e) => /^\d\d:\d\d$/.test(e.target.value) && setCutoff(e.target.value)}
+              aria-label="Custom cutoff"
+            />
+          </div>
+          <small>Only forecasts published before this moment are used.</small>
+        </label>
+        <label className="field">
+          <span>Compare forecast against</span>
+          <div className="seg">
+            {BASES.map((b) => (
+              <button key={b.value} className={basis === b.value ? 'on' : ''} onClick={() => setBasis(b.value)} title={b.title}>
+                {b.label}
+              </button>
+            ))}
+          </div>
+          <small>{BASES.find((b) => b.value === basis)!.title}</small>
+        </label>
+        <div className="meta-chip">
+          <span>{meta.data.forecast_runs.toLocaleString()} forecast runs</span>
+          <span>every ~{meta.data.forecast_run_interval_h} h</span>
+          <span>{meta.data.actual_rows.toLocaleString()} half-hours of actuals</span>
+          <span>source: Elexon BMRS</span>
+        </div>
+      </div>
+
+      <main>
+        {accuracy.error && <ErrorBox message={accuracy.error} />}
+        {tab === 'day' ? (
+          <DayAheadView date={date} cutoff={cutoff} basis={basis} />
+        ) : (
+          <AccuracyView
+            cutoff={cutoff}
+            basis={basis}
+            accuracy={accuracy.data}
+            onPickDay={(d) => {
+              setDate(clamp(d))
+              setTab('day')
+            }}
+          />
+        )}
+      </main>
+
+      <footer className="foot">
+        Actuals: FUELHH (fuelType WIND). Forecasts: WINDFOR. Error = forecast − actual. Times in Europe/London.
+      </footer>
+    </div>
+  )
+}

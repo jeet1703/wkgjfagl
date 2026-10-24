@@ -1,0 +1,15 @@
+node_modules/
+dist/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.venv/
+backend/static/
+.env
+*.log
+.DS_Store
+
+# local leftovers (original download, old synthetic-data screenshots)
+/*.zip
+/acc.png
+/day.png

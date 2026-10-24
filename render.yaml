@@ -1,0 +1,10 @@
+# Render Blueprint: New → Blueprint → pick this repo.
+services:
+  - type: web
+    name: windcast-desk
+    runtime: docker
+    plan: free
+    region: frankfurt
+    # Render calls this to check the service is healthy and restarts it if it stops
+    # answering. It does not keep the service awake: that's app/keepalive.py.
+    healthCheckPath: /api/health
