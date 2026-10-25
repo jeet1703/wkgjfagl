@@ -1,3 +1,4 @@
+import { Activity, Gauge, History, Radio, ShieldCheck, Sunrise, Target, Timer, TrendingUp, Wind, Zap } from 'lucide-react'
 import { useMemo } from 'react'
 import {
   Area,
@@ -82,35 +83,47 @@ export function DayAheadView({ date, cutoff, basis }: Props) {
     <div className="stack">
       <div className="decision-banner">
         <div>
-          <span className="eyebrow">Decision point</span>
-          <strong>{d.cutoff_utc ? fmtDateTime(d.cutoff_utc) : '—'}</strong>
-          <span className="muted"> for delivery on {fmtDay(d.date)}</span>
+          <Timer className="ico" size={20} strokeWidth={1.75} aria-hidden />
+          <div>
+            <span className="eyebrow">Decision point</span>
+            <strong>{d.cutoff_utc ? fmtDateTime(d.cutoff_utc) : '—'}</strong>
+            <span className="muted"> for delivery on {fmtDay(d.date)}</span>
+          </div>
         </div>
         <div>
-          <span className="eyebrow">Latest forecast available</span>
-          {used ? (
-            <>
-              <strong>published {fmtDateTime(used)}</strong>
-              <span className="muted"> · {leadAtStart?.toFixed(0)} h before delivery starts</span>
-            </>
-          ) : (
-            <strong className="warn">No forecast had been published yet</strong>
-          )}
+          <Radio className="ico" size={20} strokeWidth={1.75} aria-hidden />
+          <div>
+            <span className="eyebrow">Latest forecast available</span>
+            {used ? (
+              <>
+                <strong>published {fmtDateTime(used)}</strong>
+                <span className="muted"> · {leadAtStart?.toFixed(0)} h before delivery starts</span>
+              </>
+            ) : (
+              <strong className="warn">No forecast had been published yet</strong>
+            )}
+          </div>
         </div>
       </div>
 
       <section className="brief" aria-label="Morning brief">
         <div className="brief__head">
-          <span className="brief__title">Morning brief · buying for {fmtDay(d.date)}</span>
+          <span className="brief__title">
+            <Sunrise className="ico" size={18} strokeWidth={1.75} aria-hidden />
+            Morning brief · buying for {fmtDay(d.date)}
+          </span>
           {o.ran_high_pct != null && (
             <span className={`brief__tag${o.ran_high_pct > 0 ? ' brief__tag--warn' : ''}`}>
+              <TrendingUp size={13} strokeWidth={2} aria-hidden />
               Last {o.n_days} days: forecast ran {pct(Math.abs(o.ran_high_pct))} {o.ran_high_pct > 0 ? 'high' : 'low'}
             </span>
           )}
         </div>
         <div className="brief__nums">
           <div>
-            <span>Forecast says</span>
+            <span>
+              <Gauge size={14} strokeWidth={1.75} aria-hidden /> Forecast says
+            </span>
             <strong>
               {gw(o.forecast_mean)}
               <small>GW</small>
@@ -118,7 +131,9 @@ export function DayAheadView({ date, cutoff, basis }: Props) {
             <em>latest run before the cutoff</em>
           </div>
           <div className="brief__plan">
-            <span>Plan on</span>
+            <span>
+              <Target size={14} strokeWidth={1.75} aria-hidden /> Plan on
+            </span>
             <strong>
               {gw(o.plan_mean)}
               <small>GW</small>
@@ -126,7 +141,9 @@ export function DayAheadView({ date, cutoff, basis }: Props) {
             <em>forecast {signed(o.bias != null ? -o.bias : null)} MW recent bias</em>
           </div>
           <div>
-            <span>Firm · 90% safe</span>
+            <span>
+              <ShieldCheck size={14} strokeWidth={1.75} aria-hidden /> Firm · 90% safe
+            </span>
             <strong>
               {gw(o.firm_mean)}
               <small>GW</small>
@@ -144,6 +161,7 @@ export function DayAheadView({ date, cutoff, basis }: Props) {
       <div className="stats">
         <Stat
           label="Actual wind (day avg)"
+          icon={Wind}
           value={gw(s.mean_actual)}
           unit="GW"
           note={d.basis === 'metered' ? 'metered, delivered (FUELHH)' : 'delivered + switched off'}
@@ -151,12 +169,14 @@ export function DayAheadView({ date, cutoff, basis }: Props) {
         />
         <Stat
           label="Forecast error this day"
+          icon={Activity}
           value={mw(s.mae)}
           unit="MW MAE"
           note={s.bias != null ? `bias ${signed(s.bias)} MW · ${s.bias > 0 ? 'wind fell short' : 'wind beat forecast'}` : undefined}
         />
         <Stat
           label="Wind switched off by grid"
+          icon={Zap}
           value={gw(meanCurtailed)}
           unit="GW avg"
           note="paid to reduce output (constraints)"
@@ -164,6 +184,7 @@ export function DayAheadView({ date, cutoff, basis }: Props) {
         />
         <Stat
           label="Firm figure held"
+          icon={ShieldCheck}
           value={pct(held)}
           unit="of half-hours"
           note="delivered wind ≥ firm figure (target 90%)"
@@ -173,6 +194,7 @@ export function DayAheadView({ date, cutoff, basis }: Props) {
 
       <Panel
         title="Forecast at decision time vs what actually happened"
+        icon={Activity}
         subtitle="Shaded band: from the firm figure (90% safe) up to the plan figure, both sized from settled days only. Grey dotted: wind that was available but switched off by the grid."
       >
         <div className="chart">
@@ -202,6 +224,7 @@ export function DayAheadView({ date, cutoff, basis }: Props) {
 
       <Panel
         title="How the forecast evolved"
+        icon={History}
         subtitle="Teal runs were available before your cutoff; grey runs arrived after it. Shows how much the picture could still move."
       >
         <div className="chart">

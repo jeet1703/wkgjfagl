@@ -1,3 +1,4 @@
+import { Activity, AlertTriangle, BarChart3, Clock, Info, PoundSterling, ShieldCheck, Target, TrendingUp, Zap } from 'lucide-react'
 import {
   Bar,
   BarChart,
@@ -39,7 +40,9 @@ export function AccuracyView({ cutoff, basis, accuracy, onPickDay }: Props) {
     <div className="stack">
       <section className="findings" aria-label="Key findings">
         <article className="finding">
-          <span className="finding__n">1</span>
+          <span className="finding__n">
+            <Zap size={17} strokeWidth={1.75} aria-hidden />
+          </span>
           <h3>The forecast isn’t that bad – it forecasts wind the grid then switches off</h3>
           <p>
             Against delivered wind the forecast ran <b>{signed(c.bias_metered)} MW</b> high on average. On average{' '}
@@ -50,7 +53,9 @@ export function AccuracyView({ cutoff, basis, accuracy, onPickDay }: Props) {
           <p className="finding__so">So: plan on forecast <i>minus expected curtailment</i>, not the raw forecast.</p>
         </article>
         <article className="finding">
-          <span className="finding__n">2</span>
+          <span className="finding__n">
+            <PoundSterling size={17} strokeWidth={1.75} aria-hidden />
+          </span>
           <h3>What it cost in January</h3>
           <p>
             Buying against the raw forecast left <b>{mw((cost.forecast?.imbalance_mwh ?? 0) / 1000)} GWh</b> to settle at the imbalance
@@ -70,7 +75,9 @@ export function AccuracyView({ cutoff, basis, accuracy, onPickDay }: Props) {
           </p>
         </article>
         <article className="finding">
-          <span className="finding__n">3</span>
+          <span className="finding__n">
+            <ShieldCheck size={17} strokeWidth={1.75} aria-hidden />
+          </span>
           <h3>An honest buffer, tested without hindsight</h3>
           <p>
             Each day’s buffer was sized only from the 14 days settled before the decision. The firm figure held in{' '}
@@ -83,6 +90,7 @@ export function AccuracyView({ cutoff, basis, accuracy, onPickDay }: Props) {
 
       <Panel
         title="Over-forecast vs wind switched off, by day"
+        icon={Zap}
         subtitle="Bars: how far the forecast ran above delivered wind. Line: wind the grid paid to switch off. Where they match, the forecast was right about the wind – the grid just didn’t take it."
       >
         <div className="chart">
@@ -105,10 +113,11 @@ export function AccuracyView({ cutoff, basis, accuracy, onPickDay }: Props) {
       </Panel>
 
       <div className="stats">
-        <Stat label="Typical error (MAE)" value={mw(s.mae)} unit="MW" note={`${s.nmae_pct?.toFixed(1)}% of average wind output`} tone="accent" />
-        <Stat label="Bias" value={signed(s.bias)} unit="MW" note={s.bias != null && s.bias > 0 ? 'forecasts ran high on average' : 'forecasts ran low on average'} />
-        <Stat label="90% of periods within" value={`±${mw(s.p90_abs)}`} unit="MW" note={`P99 ±${mw(s.p99_abs)} · worst ${mw(s.max_abs)} MW`} />
+        <Stat icon={Activity} label="Typical error (MAE)" value={mw(s.mae)} unit="MW" note={`${s.nmae_pct?.toFixed(1)}% of average wind output`} tone="accent" />
+        <Stat icon={TrendingUp} label="Bias" value={signed(s.bias)} unit="MW" note={s.bias != null && s.bias > 0 ? 'forecasts ran high on average' : 'forecasts ran low on average'} />
+        <Stat icon={Target} label="90% of periods within" value={`±${mw(s.p90_abs)}`} unit="MW" note={`P99 ±${mw(s.p99_abs)} · worst ${mw(s.max_abs)} MW`} />
         <Stat
+          icon={AlertTriangle}
           label="Shortfall to cover (P95)"
           value={mw(s.shortfall_p95)}
           unit="MW"
@@ -118,14 +127,18 @@ export function AccuracyView({ cutoff, basis, accuracy, onPickDay }: Props) {
       </div>
 
       <div className="callout">
+        <Info className="ico" size={18} strokeWidth={1.75} aria-hidden />
+        <div>
         <strong>What this means for buying.</strong> Using the forecast available at D-1 {cutoff}, {basis === 'metered' ? 'delivered' : 'available'} wind was typically off by{' '}
         <b>{mw(s.mae)} MW</b> per half-hour. To cover wind shortfall in 9 out of 10 periods, plan for about{' '}
         <b>{mw(s.shortfall_p90)} MW</b> less wind than forecast; the remaining tail is an imbalance or intraday risk. Based on {s.n.toLocaleString()} paired
         periods ({Math.round(s.coverage * 100)}% coverage), R² = {s.r2 ?? '—'}.
+        </div>
       </div>
 
       <Panel
         title="Error grows with lead time"
+        icon={TrendingUp}
         subtitle="Accuracy of the latest forecast published at least H hours before each target. The shaded zone is where day-ahead decisions sit."
       >
         {horizons.error ? (
@@ -151,7 +164,7 @@ export function AccuracyView({ cutoff, basis, accuracy, onPickDay }: Props) {
       </Panel>
 
       <div className="grid-2">
-        <Panel title="Error by delivery day" subtitle="Mean absolute error per day. Click a bar to open that day.">
+        <Panel icon={BarChart3} title="Error by delivery day" subtitle="Mean absolute error per day. Click a bar to open that day.">
           <div className="chart">
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={accuracy.by_day} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -169,7 +182,7 @@ export function AccuracyView({ cutoff, basis, accuracy, onPickDay }: Props) {
           </div>
         </Panel>
 
-        <Panel title="Error distribution" subtitle="Forecast − actual, half-hourly. Right of zero = wind fell short.">
+        <Panel icon={Activity} title="Error distribution" subtitle="Forecast − actual, half-hourly. Right of zero = wind fell short.">
           <div className="chart">
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={accuracy.histogram} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} barCategoryGap={1}>
@@ -195,7 +208,7 @@ export function AccuracyView({ cutoff, basis, accuracy, onPickDay }: Props) {
         </Panel>
       </div>
 
-      <Panel title="Error by time of day" subtitle="Where in the day the forecast is least reliable (UK local time).">
+      <Panel icon={Clock} title="Error by time of day" subtitle="Where in the day the forecast is least reliable (UK local time).">
         <div className="chart">
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={accuracy.by_hour} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
