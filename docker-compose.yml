@@ -6,6 +6,10 @@ services:
       - "8000:8000"
     volumes:
       - ./backend/data:/app/data # keep the Elexon snapshot between runs
+    environment:
+      # Optional: AI desk notes. Taken from your shell (export GEMINI_API_KEY=...); never commit it.
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
       interval: 30s

@@ -17,6 +17,7 @@ import {
 import { api, type Basis, type SeriesPoint } from '../api'
 import { fmtDateTime, fmtDay, fmtTime, gw, mw, pct, signed } from '../format'
 import { useAsync } from '../hooks'
+import { AiNote } from './AiNote'
 import { C, axisProps, tooltipStyle } from './chartTheme'
 import { ErrorBox, Loading, Panel, Stat } from './Stat'
 
@@ -157,6 +158,8 @@ export function DayAheadView({ date, cutoff, basis }: Props) {
             : `Sized only from the ${o.n_days} delivery days already settled at the decision (D-15 to D-2), so no hindsight.`}
         </p>
       </section>
+
+      <AiNote date={d.date} cutoff={d.cutoff_local} basis={d.basis} />
 
       <div className="stats">
         <Stat

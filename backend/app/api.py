@@ -8,7 +8,7 @@ from functools import lru_cache
 import pandas as pd
 from fastapi import APIRouter, HTTPException, Query
 
-from . import config, store
+from . import ai, config, store
 from .domain import cost, curtailment, metrics, planning, selection
 
 router = APIRouter(prefix="/api")
@@ -158,6 +158,74 @@ def day(
         "series": series,
         "vintages": vintages,
     }
+
+
+def _mean(vals: list) -> float | None:
+    v = [x for x in vals if x is not None]
+    return round(sum(v) / len(v), 1) if v else None
+
+
+def ai_context(d: dict, mode: str) -> dict:
+    """The facts Gemini may use. "brief" holds only what was known at the cutoff."""
+    o = d["outlook"]
+    known = [v for v in d["vintages"] if v["available_at_cutoff"]]
+    run_means = [_mean([p["v"] for p in v["points"]]) for v in known]
+    ctx = {
+        "delivery_day": d["date"],
+        "decision_cutoff_uk": f"{d['cutoff_local']} on the day before delivery",
+        "forecast_run_used_published_utc": d["forecast_publish_time"],
+        "forecast_day_avg_mw": o.get("forecast_mean"),
+        "forecast_min_mw": min((p["forecast"] for p in d["series"] if p["forecast"] is not None), default=None),
+        "forecast_max_mw": max((p["forecast"] for p in d["series"] if p["forecast"] is not None), default=None),
+        "plan_day_avg_mw": o.get("plan_mean"),
+        "firm_90pct_day_avg_mw": o.get("firm_mean"),
+        "recent_bias_mw": o.get("bias"),
+        "buffer_p90_mw": o.get("buffer_p90"),
+        "forecast_ran_high_pct_last_days": o.get("ran_high_pct"),
+        "history_days_used": o.get("n_days"),
+        "last_runs_before_cutoff_day_avg_mw": run_means,
+        "compared_against": "delivered (metered) wind" if d["basis"] == "metered" else "available wind",
+    }
+    if mode == "review":
+        s = d["summary"]
+        paired = [p for p in d["series"] if p["actual"] is not None and p["firm"] is not None]
+        later = [v for v in d["vintages"] if not v["available_at_cutoff"]]
+        ctx |= {
+            "actual_day_avg_mw": s.get("mean_actual"),
+            "forecast_mae_mw": s.get("mae"),
+            "forecast_bias_mw": s.get("bias"),
+            "wind_switched_off_day_avg_mw": _mean([p["curtailed"] for p in d["series"]]),
+            "firm_figure_held_pct_of_half_hours": round(
+                100 * sum(p["actual"] >= p["firm"] for p in paired) / len(paired)
+            )
+            if paired
+            else None,
+            "later_runs_day_avg_mw": [_mean([p["v"] for p in v["points"]]) for v in later],
+        }
+    return ctx
+
+
+@router.get("/ai/status")
+def ai_status() -> dict:
+    return {"enabled": ai.enabled(), "model": ai.model() if ai.enabled() else None}
+
+
+@router.get("/ai/note")
+def ai_note(
+    date_: date = Query(..., alias="date", description="Delivery day (UK local)"),
+    cutoff: str = CutoffQ,
+    basis: str = BasisQ,
+    mode: str = Query(
+        "brief", pattern=r"^(brief|review)$", description="brief = before the decision; review = after delivery"
+    ),
+) -> dict:
+    if not ai.enabled():
+        raise HTTPException(503, "AI notes are disabled: set GEMINI_API_KEY on the server")
+    ctx = ai_context(day(date_, cutoff, basis), mode)
+    try:
+        return {**ai.note(mode, ctx), "facts": ctx}
+    except ai.AIUnavailable as exc:
+        raise HTTPException(502, str(exc)) from exc
 
 
 @router.get("/accuracy")
