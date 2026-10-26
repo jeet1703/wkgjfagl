@@ -17,3 +17,5 @@ backend/static/
 
 # private notes for the author
 /STUDY_GUIDE.md
+/video-recordings/
+*.mp4
