@@ -15,7 +15,6 @@ import {
 import { api, type Basis, type SeriesPoint } from '../api'
 import { fmtDateTime, fmtDay, fmtTime, gw, mw, pct, signed } from '../format'
 import { useAsync } from '../hooks'
-import { AiNote } from './AiNote'
 import { C, axisProps, legendStyle, tooltipStyle } from './chartTheme'
 import { ErrorBox, FigureTable, Loading, Section } from './Stat'
 
@@ -144,7 +143,6 @@ export function DayAheadView({ date, cutoff, basis }: Props) {
           </p>
         </section>
 
-        <AiNote date={d.date} cutoff={d.cutoff_local} basis={d.basis} />
       </aside>
 
       <div className="split__main">

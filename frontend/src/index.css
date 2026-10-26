@@ -94,29 +94,6 @@ button, input { font: inherit; color: inherit; }
 .brief__plan .num { color: var(--accent); font-size: 40px; }
 .brief__foot { margin: 6px 0 0; padding-top: 10px; border-top: 1px solid var(--rule); font-size: 12px; color: var(--muted); line-height: 1.5; }
 
-/* AI desk note */
-.ainote { border-top: 1px solid var(--ink); padding-top: 14px; }
-.ainote__head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.ainote__title { margin: 0; font-family: var(--serif); font-weight: 400; font-size: 24px; display: flex; align-items: baseline; gap: 10px; }
-.ainote__title .kicker { display: inline; margin: 0; }
-.ainote .seg button { font-family: var(--sans); font-size: 12px; padding: 3px 9px; min-height: 26px; }
-.ainote__muted { margin: 10px 0 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
-.ainote__muted code { font-family: var(--mono); font-size: 12px; background: var(--paper-2); padding: 1px 5px; }
-.ainote__btn { margin-top: 12px; border: 1px solid var(--ink); background: var(--ink); color: var(--paper); padding: 8px 14px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background 120ms, border-color 120ms; }
-.ainote__btn:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); }
-.ainote__btn:disabled { opacity: 0.55; cursor: progress; }
-.ainote__btn--ghost { margin-top: 0; background: transparent; color: var(--ink); }
-.ainote__btn--ghost:hover:not(:disabled) { background: var(--paper-2); border-color: var(--ink); }
-.ainote__body h3 { margin: 12px 0 6px; font-size: 16px; font-weight: 600; line-height: 1.35; }
-.ainote__body ul { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 13.5px; line-height: 1.55; }
-.ainote__action { margin: 10px 0 0; padding-left: 10px; border-left: 2px solid var(--accent); font-size: 13.5px; font-weight: 500; }
-.ainote__foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; font-size: 11.5px; color: var(--muted); }
-.ainote__facts { margin-top: 8px; font-size: 12px; color: var(--muted); }
-.ainote__facts summary { cursor: pointer; }
-.ainote__facts summary:hover { color: var(--ink); }
-.ainote__facts pre { margin: 6px 0 0; padding: 10px; background: var(--paper-2); font-family: var(--mono); font-size: 11px; color: var(--ink-2); overflow-x: auto; }
-.ainote__err { margin: 10px 0 0; font-size: 13px; color: var(--accent); }
-
 /* Sections: a rule, a serif title, then content */
 .section { border-top: 1px solid var(--ink); padding-top: 14px; min-width: 0; }
 .section__head { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 14px; }

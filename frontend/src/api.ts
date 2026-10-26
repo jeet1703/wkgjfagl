@@ -136,19 +136,6 @@ export interface HorizonRow {
   shortfall_p90: number
 }
 
-export type NoteMode = 'brief' | 'review'
-
-/** Short trading note written by Gemini from the app's own numbers (see backend/app/ai.py). */
-export interface AiNote {
-  headline: string
-  points: string[]
-  action: string
-  mode: NoteMode
-  model: string
-  /** Exactly the figures Gemini was given. */
-  facts: Record<string, unknown>
-}
-
 async function get<T>(path: string, params: Record<string, string> = {}): Promise<T> {
   const qs = new URLSearchParams(params).toString()
   const res = await fetch(`${BASE}/api${path}${qs ? `?${qs}` : ''}`)
@@ -163,7 +150,5 @@ export const api = {
   meta: () => get<Meta>('/meta'),
   day: (date: string, cutoff: string, basis: Basis) => get<DayResponse>('/day', { date, cutoff, basis }),
   accuracy: (cutoff: string, basis: Basis) => get<AccuracyResponse>('/accuracy', { cutoff, basis }),
-  aiStatus: () => get<{ enabled: boolean; model: string | null }>('/ai/status'),
-  aiNote: (date: string, cutoff: string, basis: Basis, mode: NoteMode) => get<AiNote>('/ai/note', { date, cutoff, basis, mode }),
   horizons: (basis: Basis) => get<{ rows: HorizonRow[] }>('/horizons', { basis }),
 }

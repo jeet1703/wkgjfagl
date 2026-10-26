@@ -8,9 +8,3 @@ services:
     # Render calls this to check the service is healthy and restarts it if it stops
     # answering. It does not keep the service awake: that's app/keepalive.py.
     healthCheckPath: /api/health
-    envVars:
-      # AI desk notes (optional). Render asks for the value on first deploy; it is never stored in the repo.
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: GEMINI_MODEL
-        value: gemini-2.5-flash

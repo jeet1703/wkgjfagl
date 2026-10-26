@@ -105,29 +105,6 @@ For delivery day D, stats come only from delivery days **D-15..D-2**. All of the
 
 The backtest scores both out of sample across January (firm coverage, MAE of plan vs raw forecast). An earlier version sized the band from the whole month's errors and scored it on the same month, which flatters it.
 
-### AI desk note: Gemini (`backend/app/ai.py`)
-
-On the day-ahead view, **AI desk note** asks Google Gemini for a three-bullet trading note:
-
-- **Before decision:** what to plan on and what buffer to hold.
-- **After delivery:** how the day went and why.
-
-Guardrails:
-
-- **Gemini never does the maths.** It only rewords figures this app has already computed (`ai_context` in `api.py`), and it is instructed to use no other numbers. The UI shows the exact facts sent ("Facts given to the AI").
-- **No hindsight.** The before-decision note gets only what was known at the cutoff. Actuals, curtailment and later forecast runs go only to the after-delivery review. `test_ai_brief_never_sees_the_outcome` enforces this.
-- **The key stays on the server.** It is sent in the `x-goog-api-key` header, never in a URL or to the browser. Without a key, the endpoint returns 503 and the UI shows a hint instead.
-- **Cheap.** A note is written only when the user clicks. Identical requests are cached, and the response is constrained to a JSON schema.
-
-To enable it, get a key from Google AI Studio, then:
-
-```bash
-export GEMINI_API_KEY=...          # Windows PowerShell: $env:GEMINI_API_KEY="..."
-docker compose up --build          # compose passes it through; on Render, set it when prompted
-```
-
-`GEMINI_MODEL` defaults to `gemini-2.5-flash`.
-
 ### Cost of error (`backend/app/domain/cost.py`)
 
 Per half-hour: `cost = (forecast − actual) MW × 0.5 h × (imbalance price − market price)`. A shortfall is bought at imbalance instead of ahead; a surplus is sold at imbalance after paying market price for it. The imbalance price is the single GB system price. The market price is the APX market index (MID), used as a proxy for buying ahead. The hourly forecast is interpolated to half-hours within each delivery day.
@@ -148,7 +125,6 @@ FastAPI (Python 3.12)
   ├─ domain/planning.py  rolling plan/firm figures (D-15..D-2) + out-of-sample backtest
   ├─ domain/curtailment.py  delivered vs available wind, bias explained by curtailment
   ├─ domain/cost.py      £ cost of error at imbalance vs market price
-  ├─ ai.py               Gemini desk notes (grounded in computed figures, no hindsight)
   ├─ store.py            CSV snapshot in backend/data/, fetched once from Elexon
   └─ elexon.py           BMRS /stream client: day-sized windows, retries, de-duplication
 ```
