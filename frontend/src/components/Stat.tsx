@@ -1,54 +1,28 @@
-import type { LucideIcon } from 'lucide-react'
-import { AlertTriangle } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-interface Props {
-  label: string
-  value: ReactNode
-  unit?: string
-  note?: ReactNode
-  tone?: 'default' | 'accent' | 'warn'
-  icon?: LucideIcon
-}
-
-export function Stat({ label, value, unit, note, tone = 'default', icon: Icon }: Props) {
-  return (
-    <div className={`stat stat--${tone}`}>
-      <div className="stat__label">
-        {Icon && <Icon className="ico" size={15} strokeWidth={1.75} aria-hidden />}
-        {label}
-      </div>
-      <div className="stat__value">
-        {value}
-        {unit && <span className="stat__unit">{unit}</span>}
-      </div>
-      {note && <div className="stat__note">{note}</div>}
-    </div>
-  )
-}
-
-export function Panel({
+/** A titled block separated by a hairline rule. No card container: space does the grouping. */
+export function Section({
   title,
+  kicker,
   subtitle,
   children,
   aside,
-  icon: Icon,
+  className = '',
 }: {
   title: string
+  kicker?: string
   subtitle?: ReactNode
   children: ReactNode
   aside?: ReactNode
-  icon?: LucideIcon
+  className?: string
 }) {
   return (
-    <section className="panel">
-      <header className="panel__head">
+    <section className={`section ${className}`}>
+      <header className="section__head">
         <div>
-          <h2>
-            {Icon && <Icon className="ico" size={17} strokeWidth={1.75} aria-hidden />}
-            {title}
-          </h2>
-          {subtitle && <p className="panel__sub">{subtitle}</p>}
+          {kicker && <span className="kicker">{kicker}</span>}
+          <h2>{title}</h2>
+          {subtitle && <p className="section__sub">{subtitle}</p>}
         </div>
         {aside}
       </header>
@@ -57,15 +31,40 @@ export function Panel({
   )
 }
 
+export interface FigureRow {
+  label: string
+  value: ReactNode
+  unit?: string
+  note?: ReactNode
+  /** Accent marks the one figure to act on. */
+  tone?: 'default' | 'accent' | 'muted'
+}
+
+/** Figures as a ruled data table: label, value, note. */
+export function FigureTable({ rows, caption }: { rows: FigureRow[]; caption?: string }) {
+  return (
+    <table className="figtable">
+      {caption && <caption>{caption}</caption>}
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.label} className={`figtable__row figtable__row--${r.tone ?? 'default'}`}>
+            <th scope="row">{r.label}</th>
+            <td className="figtable__value">
+              {r.value}
+              {r.unit && <span className="unit">{r.unit}</span>}
+            </td>
+            <td className="figtable__note">{r.note}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
 export function Loading() {
   return <div className="state">Loading…</div>
 }
 
 export function ErrorBox({ message }: { message: string }) {
-  return (
-    <div className="state state--error">
-      <AlertTriangle size={16} strokeWidth={1.75} aria-hidden style={{ verticalAlign: '-3px', marginRight: 6 }} />
-      Couldn’t load data. {message}
-    </div>
-  )
+  return <div className="state state--error">Couldn’t load data. {message}</div>
 }

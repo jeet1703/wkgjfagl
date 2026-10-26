@@ -1,34 +1,38 @@
-// One palette for every chart so the app reads as a single system.
-// Tuned for the light glass theme: dark strokes on frosted white panels.
+// One palette for every chart: ink and greys on paper, with vermilion as the single accent.
+// The accent always marks the number the desk should act on (plan, shortfall), never decoration.
 export const C = {
-  actual: '#0f172a',
-  forecast: '#0d9488',
-  band: '#14b8a6',
-  later: '#94a3b8',
-  shortfall: '#ea7a3c',
-  surplus: '#3b82f6',
-  grid: 'rgba(15,23,42,0.08)',
-  axis: '#5b6474',
+  actual: '#16161a', // what happened
+  forecast: '#8c8a84', // the raw forecast: context, not the recommendation
+  plan: '#c8411b', // the accent: what to plan on
+  band: '#c8411b',
+  later: '#c9c6bf',
+  shortfall: '#c8411b',
+  surplus: '#b7b4ad',
+  grid: '#e6e3dc',
+  axis: '#6b6963',
 }
+
+const MONO = 'IBM Plex Mono, ui-monospace, monospace'
 
 export const axisProps = {
   stroke: C.axis,
-  tick: { fill: C.axis, fontSize: 11, fontFamily: 'IBM Plex Mono, monospace' },
+  tick: { fill: C.axis, fontSize: 11, fontFamily: MONO },
   tickLine: false,
-  axisLine: { stroke: C.grid },
+  axisLine: { stroke: '#16161a' },
 }
 
 export const tooltipStyle = {
   contentStyle: {
-    borderRadius: 12,
-    background: 'rgba(255,255,255,0.92)',
-    border: '1px solid rgba(15,23,42,0.08)',
-    boxShadow: '0 10px 30px rgba(15,23,42,.1)',
-    backdropFilter: 'blur(12px)',
+    borderRadius: 0,
+    background: '#fbfaf7',
+    border: '1px solid #16161a',
+    boxShadow: 'none',
     fontSize: 12,
-    fontFamily: 'Inter Tight, sans-serif',
+    fontFamily: 'IBM Plex Sans, sans-serif',
   },
-  labelStyle: { fontWeight: 600, color: '#0f172a', marginBottom: 4 },
-  itemStyle: { color: '#334155' },
-  cursor: { stroke: 'rgba(15,23,42,0.2)', fill: 'rgba(15,23,42,0.04)' },
+  labelStyle: { fontWeight: 600, color: '#16161a', marginBottom: 4 },
+  itemStyle: { color: '#16161a', fontFamily: MONO, fontSize: 11.5 },
+  cursor: { stroke: '#16161a', strokeWidth: 1, fill: 'rgba(22,22,26,0.04)' },
 }
+
+export const legendStyle = { fontSize: 12, fontFamily: 'IBM Plex Sans, sans-serif', color: '#3a3936' }

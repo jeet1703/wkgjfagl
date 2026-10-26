@@ -1,5 +1,5 @@
-import { BarChart3, CalendarDays, ChevronLeft, ChevronRight, Clock, Database, Layers, Radio, Timer, Wind } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useState } from 'react'
 
 import { api, type Basis } from './api'
 import { AccuracyView } from './components/AccuracyView'
@@ -18,25 +18,9 @@ const CUTOFF_PRESETS = [
 ]
 
 const BASES: { value: Basis; label: string; title: string }[] = [
-  { value: 'metered', label: 'Wind delivered', title: 'Metered output – what you actually receive.' },
-  { value: 'available', label: 'Wind available', title: 'Delivered + wind the grid paid to switch off – fair test of forecast skill.' },
+  { value: 'metered', label: 'Delivered', title: 'Metered output – what you actually receive.' },
+  { value: 'available', label: 'Available', title: 'Delivered + wind the grid paid to switch off – a fair test of forecast skill.' },
 ]
-
-/** Mesh-gradient decoration behind the glass layer. Purely visual. */
-function Shell({ children }: { children: ReactNode }) {
-  return (
-    <>
-      <div className="orbs" aria-hidden>
-        <div className="orb orb--1" />
-        <div className="orb orb--2" />
-        <div className="orb orb--3" />
-      </div>
-      <div className="app">{children}</div>
-    </>
-  )
-}
-
-const ico = { size: 15, strokeWidth: 1.75, className: 'ico', 'aria-hidden': true } as const
 
 export default function App() {
   const meta = useAsync(() => api.meta(), [])
@@ -46,60 +30,51 @@ export default function App() {
   const [basis, setBasis] = useState<Basis>('metered')
   const accuracy = useAsync(() => api.accuracy(cutoff, basis), [cutoff, basis])
 
-  if (meta.error) return <Shell><ErrorBox message={meta.error} /></Shell>
-  if (!meta.data) return <Shell><Loading /></Shell>
+  if (meta.error) return <div className="app"><ErrorBox message={meta.error} /></div>
+  if (!meta.data) return <div className="app"><Loading /></div>
   const [first, last] = meta.data.delivery_window
   const clamp = (d: string) => (d < first ? first : d > last ? last : d)
 
   return (
-    <Shell>
-      <header className="top">
-        <div className="brand">
-          <div className="brand__logo glass">
-            <Wind size={24} strokeWidth={1.75} aria-hidden />
-          </div>
-          <div>
-            <h1>Windcast Desk</h1>
-            <p>GB national wind · day-ahead purchasing pilot · decisions in January 2026</p>
-          </div>
+    <div className="app">
+      <header className="masthead">
+        <div className="masthead__title">
+          <h1>Windcast Desk</h1>
+          <p>GB national wind, day-ahead purchasing pilot. Decisions made in January 2026.</p>
         </div>
-        <nav className="tabs" aria-label="Views">
-          <button className={tab === 'day' ? 'on' : ''} onClick={() => setTab('day')}>
-            <CalendarDays {...ico} />
-            Day-ahead view
+        <nav className="nav" aria-label="Views">
+          <button className={tab === 'day' ? 'on' : ''} aria-current={tab === 'day' ? 'page' : undefined} onClick={() => setTab('day')}>
+            Day ahead
           </button>
-          <button className={tab === 'accuracy' ? 'on' : ''} onClick={() => setTab('accuracy')}>
-            <BarChart3 {...ico} />
-            Forecast accuracy
+          <button className={tab === 'accuracy' ? 'on' : ''} aria-current={tab === 'accuracy' ? 'page' : undefined} onClick={() => setTab('accuracy')}>
+            Accuracy
           </button>
         </nav>
       </header>
 
       <div className="controls">
         {tab === 'day' && (
-          <label className="field">
-            <span>
-              <CalendarDays {...ico} size={13} /> Delivery day
-            </span>
+          <div className="field">
+            <span className="label">Delivery day</span>
             <div className="daypick">
               <button aria-label="Previous day" disabled={date <= first} onClick={() => setDate(clamp(addDays(date, -1)))}>
-                <ChevronLeft size={16} strokeWidth={1.75} aria-hidden />
+                <ChevronLeft size={16} strokeWidth={1.5} aria-hidden />
               </button>
-              <input type="date" min={first} max={last} value={date} onChange={(e) => e.target.value && setDate(clamp(e.target.value))} />
+              <input type="date" aria-label="Delivery day" min={first} max={last} value={date} onChange={(e) => e.target.value && setDate(clamp(e.target.value))} />
               <button aria-label="Next day" disabled={date >= last} onClick={() => setDate(clamp(addDays(date, 1)))}>
-                <ChevronRight size={16} strokeWidth={1.75} aria-hidden />
+                <ChevronRight size={16} strokeWidth={1.5} aria-hidden />
               </button>
             </div>
-            <small>{fmtDay(date)} · decided {fmtDay(addDays(date, -1))}</small>
-          </label>
+            <small>
+              {fmtDay(date)}, decided {fmtDay(addDays(date, -1))}
+            </small>
+          </div>
         )}
-        <label className="field">
-          <span>
-            <Clock {...ico} size={13} /> Decision cutoff (D-1, UK time)
-          </span>
-          <div className="seg">
+        <div className="field">
+          <span className="label">Decision cutoff, D-1 UK time</span>
+          <div className="seg" role="group" aria-label="Decision cutoff">
             {CUTOFF_PRESETS.map((p) => (
-              <button key={p.value} className={cutoff === p.value ? 'on' : ''} onClick={() => setCutoff(p.value)} title={p.label}>
+              <button key={p.value} className={cutoff === p.value ? 'on' : ''} aria-pressed={cutoff === p.value} onClick={() => setCutoff(p.value)} title={p.label}>
                 {p.value}
               </button>
             ))}
@@ -112,38 +87,25 @@ export default function App() {
             />
           </div>
           <small>Only forecasts published before this moment are used.</small>
-        </label>
-        <label className="field">
-          <span>
-            <Layers {...ico} size={13} /> Compare forecast against
-          </span>
-          <div className="seg">
+        </div>
+        <div className="field">
+          <span className="label">Compare against wind</span>
+          <div className="seg" role="group" aria-label="Compare against">
             {BASES.map((b) => (
-              <button key={b.value} className={basis === b.value ? 'on' : ''} onClick={() => setBasis(b.value)} title={b.title}>
+              <button key={b.value} className={basis === b.value ? 'on' : ''} aria-pressed={basis === b.value} onClick={() => setBasis(b.value)} title={b.title}>
                 {b.label}
               </button>
             ))}
           </div>
           <small>{BASES.find((b) => b.value === basis)!.title}</small>
-        </label>
-        <div className="meta-chip">
-          <span>
-            <Radio {...ico} size={12} />
-            {meta.data.forecast_runs.toLocaleString()} forecast runs
-          </span>
-          <span>
-            <Timer {...ico} size={12} />
-            every ~{meta.data.forecast_run_interval_h} h
-          </span>
-          <span>
-            <Wind {...ico} size={12} />
-            {meta.data.actual_rows.toLocaleString()} half-hours of actuals
-          </span>
-          <span>
-            <Database {...ico} size={12} />
-            Elexon BMRS
-          </span>
         </div>
+        <p className="meta">
+          {meta.data.forecast_runs.toLocaleString()} forecast runs, every ~{meta.data.forecast_run_interval_h} h
+          <br />
+          {meta.data.actual_rows.toLocaleString()} half-hours of actuals
+          <br />
+          Source: Elexon BMRS
+        </p>
       </div>
 
       <main>
@@ -164,8 +126,9 @@ export default function App() {
       </main>
 
       <footer className="foot">
-        Actuals: FUELHH (fuelType WIND). Forecasts: WINDFOR. Error = forecast − actual. Times in Europe/London.
+        Actuals: FUELHH (fuelType WIND). Forecasts: WINDFOR. Curtailment: accepted bids on wind units. Prices: system price and APX
+        market index. Error = forecast − actual. Times in Europe/London. All data: Elexon BMRS.
       </footer>
-    </Shell>
+    </div>
   )
 }

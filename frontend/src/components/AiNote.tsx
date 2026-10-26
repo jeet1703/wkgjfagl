@@ -1,4 +1,3 @@
-import { Info, RefreshCw, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 
 import { api, type AiNote as Note, type Basis, type NoteMode } from '../api'
@@ -39,12 +38,11 @@ export function AiNote({ date, cutoff, basis }: Props) {
   }
 
   return (
-    <section className="ainote glass" aria-label="AI desk note">
+    <section className="ainote" aria-label="AI desk note">
       <div className="ainote__head">
-        <span className="ainote__title">
-          <Sparkles className="ico" size={18} strokeWidth={1.75} aria-hidden />
-          AI desk note
-        </span>
+        <h2 className="ainote__title">
+          Desk note <span className="kicker">Gemini</span>
+        </h2>
         <div className="seg" role="tablist" aria-label="Note type">
           {MODES.map((m) => (
             <button key={m.value} role="tab" aria-selected={mode === m.value} className={mode === m.value ? 'on' : ''} onClick={() => setMode(m.value)}>
@@ -56,7 +54,7 @@ export function AiNote({ date, cutoff, basis }: Props) {
 
       {!status.data.enabled ? (
         <p className="ainote__muted">
-          <Info size={14} strokeWidth={1.75} aria-hidden /> AI notes are off. Set <code>GEMINI_API_KEY</code> on the server to turn on
+          AI notes are off. Set <code>GEMINI_API_KEY</code> on the server to turn on
           Gemini-written briefs.
         </p>
       ) : note ? (
@@ -73,7 +71,7 @@ export function AiNote({ date, cutoff, basis }: Props) {
               Written by {note.model} from the figures below only. {MODES.find((m) => m.value === note.mode)!.hint}
             </span>
             <button className="ainote__btn ainote__btn--ghost" onClick={generate} disabled={loading}>
-              <RefreshCw size={14} strokeWidth={1.75} aria-hidden /> Regenerate
+              Regenerate
             </button>
           </div>
           <details className="ainote__facts">
@@ -85,7 +83,6 @@ export function AiNote({ date, cutoff, basis }: Props) {
         <div className="ainote__empty">
           <p className="ainote__muted">{MODES.find((m) => m.value === mode)!.hint}</p>
           <button className="ainote__btn" onClick={generate} disabled={loading}>
-            <Sparkles size={15} strokeWidth={1.75} aria-hidden />
             {loading ? 'Writing…' : 'Write note with Gemini'}
           </button>
         </div>

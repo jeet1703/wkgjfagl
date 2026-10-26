@@ -1,4 +1,3 @@
-import { Activity, Gauge, History, Radio, ShieldCheck, Sunrise, Target, Timer, TrendingUp, Wind, Zap } from 'lucide-react'
 import { useMemo } from 'react'
 import {
   Area,
@@ -7,7 +6,6 @@ import {
   Legend,
   Line,
   LineChart,
-  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -18,8 +16,8 @@ import { api, type Basis, type SeriesPoint } from '../api'
 import { fmtDateTime, fmtDay, fmtTime, gw, mw, pct, signed } from '../format'
 import { useAsync } from '../hooks'
 import { AiNote } from './AiNote'
-import { C, axisProps, tooltipStyle } from './chartTheme'
-import { ErrorBox, Loading, Panel, Stat } from './Stat'
+import { C, axisProps, legendStyle, tooltipStyle } from './chartTheme'
+import { ErrorBox, FigureTable, Loading, Section } from './Stat'
 
 interface Props {
   date: string
@@ -81,181 +79,161 @@ export function DayAheadView({ date, cutoff, basis }: Props) {
   const leadAtStart = used && d.series.length ? (new Date(d.series[0].t).getTime() - new Date(used).getTime()) / 3.6e6 : null
 
   return (
-    <div className="stack">
-      <div className="decision-banner">
-        <div>
-          <Timer className="ico" size={20} strokeWidth={1.75} aria-hidden />
+    <div className="split">
+      <aside className="split__side">
+        <dl className="decision">
           <div>
-            <span className="eyebrow">Decision point</span>
-            <strong>{d.cutoff_utc ? fmtDateTime(d.cutoff_utc) : '—'}</strong>
-            <span className="muted"> for delivery on {fmtDay(d.date)}</span>
+            <dt>Decision point</dt>
+            <dd>{d.cutoff_utc ? fmtDateTime(d.cutoff_utc) : '—'}</dd>
+            <dd className="muted">for delivery on {fmtDay(d.date)}</dd>
           </div>
-        </div>
-        <div>
-          <Radio className="ico" size={20} strokeWidth={1.75} aria-hidden />
           <div>
-            <span className="eyebrow">Latest forecast available</span>
+            <dt>Latest forecast available</dt>
             {used ? (
               <>
-                <strong>published {fmtDateTime(used)}</strong>
-                <span className="muted"> · {leadAtStart?.toFixed(0)} h before delivery starts</span>
+                <dd>Published {fmtDateTime(used)}</dd>
+                <dd className="muted">{leadAtStart?.toFixed(0)} h before delivery starts</dd>
               </>
             ) : (
-              <strong className="warn">No forecast had been published yet</strong>
+              <dd className="warn">No forecast had been published yet</dd>
             )}
           </div>
-        </div>
-      </div>
+        </dl>
 
-      <section className="brief" aria-label="Morning brief">
-        <div className="brief__head">
-          <span className="brief__title">
-            <Sunrise className="ico" size={18} strokeWidth={1.75} aria-hidden />
-            Morning brief · buying for {fmtDay(d.date)}
-          </span>
-          {o.ran_high_pct != null && (
-            <span className={`brief__tag${o.ran_high_pct > 0 ? ' brief__tag--warn' : ''}`}>
-              <TrendingUp size={13} strokeWidth={2} aria-hidden />
-              Last {o.n_days} days: forecast ran {pct(Math.abs(o.ran_high_pct))} {o.ran_high_pct > 0 ? 'high' : 'low'}
-            </span>
-          )}
-        </div>
-        <div className="brief__nums">
-          <div>
-            <span>
-              <Gauge size={14} strokeWidth={1.75} aria-hidden /> Forecast says
-            </span>
-            <strong>
-              {gw(o.forecast_mean)}
-              <small>GW</small>
-            </strong>
-            <em>latest run before the cutoff</em>
-          </div>
-          <div className="brief__plan">
-            <span>
-              <Target size={14} strokeWidth={1.75} aria-hidden /> Plan on
-            </span>
-            <strong>
-              {gw(o.plan_mean)}
-              <small>GW</small>
-            </strong>
-            <em>forecast {signed(o.bias != null ? -o.bias : null)} MW recent bias</em>
-          </div>
-          <div>
-            <span>
-              <ShieldCheck size={14} strokeWidth={1.75} aria-hidden /> Firm · 90% safe
-            </span>
-            <strong>
-              {gw(o.firm_mean)}
-              <small>GW</small>
-            </strong>
-            <em>forecast − {mw(o.buffer_p90)} MW buffer</em>
-          </div>
-        </div>
-        <p className="brief__foot">
-          {o.plan_mean == null
-            ? `Not enough settled history before this day (${o.n_days ?? 0} days) to size planning figures.`
-            : `Sized only from the ${o.n_days} delivery days already settled at the decision (D-15 to D-2), so no hindsight.`}
-        </p>
-      </section>
+        <section className="brief" aria-label="Morning brief">
+          <h2 className="brief__title">Morning brief</h2>
+          <p className="brief__lede">
+            Buying for {fmtDay(d.date)}.
+            {o.ran_high_pct != null && (
+              <>
+                {' '}
+                Over the last {o.n_days} days the forecast ran <b>{pct(Math.abs(o.ran_high_pct))} {o.ran_high_pct > 0 ? 'high' : 'low'}</b>.
+              </>
+            )}
+          </p>
+          <dl className="brief__nums">
+            <div>
+              <dt>Forecast says</dt>
+              <dd className="num">
+                {gw(o.forecast_mean)}
+                <span className="unit">GW</span>
+              </dd>
+              <dd className="note">latest run before the cutoff</dd>
+            </div>
+            <div className="brief__plan">
+              <dt>Plan on</dt>
+              <dd className="num">
+                {gw(o.plan_mean)}
+                <span className="unit">GW</span>
+              </dd>
+              <dd className="note">forecast {signed(o.bias != null ? -o.bias : null)} MW recent bias</dd>
+            </div>
+            <div>
+              <dt>Firm, 90% safe</dt>
+              <dd className="num">
+                {gw(o.firm_mean)}
+                <span className="unit">GW</span>
+              </dd>
+              <dd className="note">forecast − {mw(o.buffer_p90)} MW buffer</dd>
+            </div>
+          </dl>
+          <p className="brief__foot">
+            {o.plan_mean == null
+              ? `Not enough settled history before this day (${o.n_days ?? 0} days) to size planning figures.`
+              : `Sized only from the ${o.n_days} delivery days already settled at the decision (D-15 to D-2), so no hindsight.`}
+          </p>
+        </section>
 
-      <AiNote date={d.date} cutoff={d.cutoff_local} basis={d.basis} />
+        <AiNote date={d.date} cutoff={d.cutoff_local} basis={d.basis} />
+      </aside>
 
-      <div className="stats">
-        <Stat
-          label="Actual wind (day avg)"
-          icon={Wind}
-          value={gw(s.mean_actual)}
-          unit="GW"
-          note={d.basis === 'metered' ? 'metered, delivered (FUELHH)' : 'delivered + switched off'}
-          tone="accent"
-        />
-        <Stat
-          label="Forecast error this day"
-          icon={Activity}
-          value={mw(s.mae)}
-          unit="MW MAE"
-          note={s.bias != null ? `bias ${signed(s.bias)} MW · ${s.bias > 0 ? 'wind fell short' : 'wind beat forecast'}` : undefined}
-        />
-        <Stat
-          label="Wind switched off by grid"
-          icon={Zap}
-          value={gw(meanCurtailed)}
-          unit="GW avg"
-          note="paid to reduce output (constraints)"
-          tone={meanCurtailed > 1000 ? 'warn' : 'default'}
-        />
-        <Stat
-          label="Firm figure held"
-          icon={ShieldCheck}
-          value={pct(held)}
-          unit="of half-hours"
-          note="delivered wind ≥ firm figure (target 90%)"
-          tone={held != null && held < 80 ? 'warn' : 'default'}
-        />
-      </div>
-
-      <Panel
-        title="Forecast at decision time vs what actually happened"
-        icon={Activity}
-        subtitle="Shaded band: from the firm figure (90% safe) up to the plan figure, both sized from settled days only. Grey dotted: wind that was available but switched off by the grid."
-      >
-        <div className="chart">
-          <ResponsiveContainer width="100%" height={340}>
-            <ComposedChart data={rows} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-              <CartesianGrid stroke={C.grid} vertical={false} />
-              <XAxis dataKey="t" tickFormatter={fmtTime} minTickGap={40} {...axisProps} />
-              <YAxis tickFormatter={gwTick} width={44} {...axisProps} label={{ value: 'GW', angle: -90, position: 'insideLeft', fill: C.axis, fontSize: 11 }} />
-              <Tooltip
-                {...tooltipStyle}
-                labelFormatter={(l) => fmtTime(String(l))}
-                formatter={(v, name) =>
-                  Array.isArray(v) ? [`${mw(v[0] as number)} – ${mw(v[1] as number)} MW`, name] : [`${mw(v as number)} MW`, name]
-                }
-              />
-              <Legend iconType="plainline" wrapperStyle={{ fontSize: 12 }} />
-              <Area dataKey="band" name="Firm → plan range" fill={C.band} fillOpacity={0.16} stroke="none" connectNulls isAnimationActive={false} />
-              <Line dataKey="forecast" name="Day-ahead forecast" stroke={C.forecast} strokeWidth={2.5} strokeDasharray="6 4" dot={false} connectNulls isAnimationActive={false} />
-              <Line dataKey="plan" name="Plan figure" stroke={C.forecast} strokeWidth={1.5} dot={false} connectNulls isAnimationActive={false} />
-              <Line dataKey="firm" name="Firm (90%)" stroke={C.shortfall} strokeWidth={1.5} strokeDasharray="2 3" dot={false} connectNulls isAnimationActive={false} />
-              <Line dataKey="available" name="Available (incl. switched off)" stroke={C.later} strokeWidth={1.5} strokeDasharray="1 3" dot={false} connectNulls isAnimationActive={false} />
-              <Line dataKey="actual" name="Actual" stroke={C.actual} strokeWidth={2} dot={false} connectNulls isAnimationActive={false} />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
-      </Panel>
-
-      <Panel
-        title="How the forecast evolved"
-        icon={History}
-        subtitle="Teal runs were available before your cutoff; grey runs arrived after it. Shows how much the picture could still move."
-      >
-        <div className="chart">
-          <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={vintageRows} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-              <CartesianGrid stroke={C.grid} vertical={false} />
-              <XAxis dataKey="t" tickFormatter={fmtTime} minTickGap={40} {...axisProps} />
-              <YAxis tickFormatter={gwTick} width={44} {...axisProps} />
-              <Tooltip {...tooltipStyle} labelFormatter={(l) => fmtTime(String(l))} formatter={(v, name) => [`${mw(v as number)} MW`, name]} />
-              {d.vintages.map((v, i) => (
-                <Line
-                  key={v.publish_time}
-                  dataKey={`v${i}`}
-                  name={`Run ${fmtDateTime(v.publish_time)}${v.available_at_cutoff ? '' : ' (after cutoff)'}`}
-                  stroke={v.available_at_cutoff ? C.forecast : C.later}
-                  strokeOpacity={v.available_at_cutoff ? 0.45 + (0.55 * (i + 1)) / d.vintages.length : 0.8}
-                  strokeWidth={1.5}
-                  dot={false}
-                  connectNulls
-                  isAnimationActive={false}
+      <div className="split__main">
+        <Section
+          kicker={fmtDay(d.date)}
+          title="Forecast at decision time against what happened"
+          subtitle="Red line: the plan figure. Shaded: from the firm figure up to the plan, both sized from settled days only. Grey dotted: wind that was available but switched off by the grid."
+        >
+          <div className="chart">
+            <ResponsiveContainer width="100%" height={360}>
+              <ComposedChart data={rows} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid stroke={C.grid} vertical={false} />
+                <XAxis dataKey="t" tickFormatter={fmtTime} minTickGap={40} {...axisProps} />
+                <YAxis tickFormatter={gwTick} width={40} {...axisProps} axisLine={false} label={{ value: 'GW', angle: -90, position: 'insideLeft', fill: C.axis, fontSize: 11 }} />
+                <Tooltip
+                  {...tooltipStyle}
+                  labelFormatter={(l) => fmtTime(String(l))}
+                  formatter={(v, name) =>
+                    Array.isArray(v) ? [`${mw(v[0] as number)} – ${mw(v[1] as number)} MW`, name] : [`${mw(v as number)} MW`, name]
+                  }
                 />
-              ))}
-              <Line dataKey="actual" name="Actual" stroke={C.actual} strokeWidth={2} dot={false} connectNulls isAnimationActive={false} />
-              <ReferenceLine y={0} stroke={C.grid} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </Panel>
+                <Legend iconType="plainline" wrapperStyle={legendStyle} />
+                <Area dataKey="band" name="Firm → plan range" fill={C.band} fillOpacity={0.09} stroke="none" connectNulls isAnimationActive={false} />
+                <Line dataKey="forecast" name="Day-ahead forecast" stroke={C.forecast} strokeWidth={1.75} strokeDasharray="5 4" dot={false} connectNulls isAnimationActive={false} />
+                <Line dataKey="plan" name="Plan figure" stroke={C.plan} strokeWidth={2} dot={false} connectNulls isAnimationActive={false} />
+                <Line dataKey="firm" name="Firm (90%)" stroke={C.plan} strokeWidth={1} strokeDasharray="2 3" dot={false} connectNulls isAnimationActive={false} />
+                <Line dataKey="available" name="Available (incl. switched off)" stroke={C.forecast} strokeWidth={1.25} strokeDasharray="1 3" dot={false} connectNulls isAnimationActive={false} />
+                <Line dataKey="actual" name="Actual" stroke={C.actual} strokeWidth={2} dot={false} connectNulls isAnimationActive={false} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </Section>
+
+        <Section title="The day in numbers">
+          <FigureTable
+            rows={[
+              {
+                label: 'Actual wind, day average',
+                value: gw(s.mean_actual),
+                unit: 'GW',
+                note: d.basis === 'metered' ? 'Metered, delivered (FUELHH)' : 'Delivered plus switched off',
+              },
+              {
+                label: 'Forecast error (MAE)',
+                value: mw(s.mae),
+                unit: 'MW',
+                note: s.bias != null ? `Bias ${signed(s.bias)} MW, ${s.bias > 0 ? 'wind fell short' : 'wind beat the forecast'}` : undefined,
+              },
+              { label: 'Wind switched off by the grid', value: gw(meanCurtailed), unit: 'GW', note: 'Paid to reduce output, mostly network constraints' },
+              {
+                label: 'Firm figure held',
+                value: pct(held),
+                note: 'Share of half-hours where delivered wind reached the firm figure (target 90%)',
+                tone: held != null && held < 80 ? 'accent' : 'default',
+              },
+            ]}
+          />
+        </Section>
+
+        <Section
+          title="How the forecast evolved"
+          subtitle="Solid grey runs were available before your cutoff; dashed light runs arrived after it. Black is what actually happened."
+        >
+          <div className="chart">
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={vintageRows} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid stroke={C.grid} vertical={false} />
+                <XAxis dataKey="t" tickFormatter={fmtTime} minTickGap={40} {...axisProps} />
+                <YAxis tickFormatter={gwTick} width={40} {...axisProps} axisLine={false} />
+                <Tooltip {...tooltipStyle} labelFormatter={(l) => fmtTime(String(l))} formatter={(v, name) => [`${mw(v as number)} MW`, name]} />
+                {d.vintages.map((v, i) => (
+                  <Line
+                    key={v.publish_time}
+                    dataKey={`v${i}`}
+                    name={`Run ${fmtDateTime(v.publish_time)}${v.available_at_cutoff ? '' : ' (after cutoff)'}`}
+                    stroke={v.available_at_cutoff ? C.forecast : C.later}
+                    strokeDasharray={v.available_at_cutoff ? undefined : '4 3'}
+                    strokeWidth={1.25}
+                    dot={false}
+                    connectNulls
+                    isAnimationActive={false}
+                  />
+                ))}
+                <Line dataKey="actual" name="Actual" stroke={C.actual} strokeWidth={2} dot={false} connectNulls isAnimationActive={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </Section>
+      </div>
     </div>
   )
 }
