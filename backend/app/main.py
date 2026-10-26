@@ -10,7 +10,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -23,16 +23,25 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     api.warm()  # load the snapshot and pre-compute default views before serving traffic
-    ping = keepalive.start()  # no-op unless deployed on Render (see keepalive.py)
+    keepalive.start()  # boots keepalive worker if URL known at startup
     yield
-    if ping:
-        ping.cancel()
+    keepalive.stop()
 
 
 def create_app() -> FastAPI:
     app = FastAPI(title="Wind Forecast Desk API", version="1.0.0", lifespan=lifespan)
     origins = os.getenv("CORS_ORIGINS", "*").split(",")
     app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["GET"], allow_headers=["*"])
+
+    @app.middleware("http")
+    async def self_alive_middleware(request: Request, call_next):
+        # Auto-detect public external host and activate self-alive if not yet running
+        host = request.headers.get("x-forwarded-host") or request.headers.get("host") or ""
+        proto = request.headers.get("x-forwarded-proto") or request.url.scheme or "https"
+        if host:
+            keepalive.learn_from_request(host, proto)
+        return await call_next(request)
+
     app.include_router(api.router)
 
     index = config.STATIC_DIR / "index.html"

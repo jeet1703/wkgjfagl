@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { api, type Basis } from './api'
 import { AccuracyView } from './components/AccuracyView'
@@ -23,6 +23,15 @@ const BASES: { value: Basis; label: string; title: string }[] = [
 ]
 
 export default function App() {
+  // Keep backend warm while desk operator has the tab open (Render sleeps after 15m)
+  useEffect(() => {
+    const ping = () => {
+      fetch('/api/health').catch(() => {})
+    }
+    const timer = setInterval(ping, 4 * 60 * 1000)
+    return () => clearInterval(timer)
+  }, [])
+
   const meta = useAsync(() => api.meta(), [])
   const [tab, setTab] = useState<Tab>('day')
   const [date, setDate] = useState('2026-01-15')
